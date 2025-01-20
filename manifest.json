@@ -8,7 +8,7 @@
   },
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
+      "matches": ["https://edfora.keka.com/"],
       "js": ["content.js"]
     }
   ],
