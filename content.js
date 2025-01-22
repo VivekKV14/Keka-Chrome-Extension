@@ -42,7 +42,15 @@ const getDisplayMessage = ({ hours, minutes, isSurplus, hoursRemaining, minutesR
 };
 
 const TOTAL_MILLISECONDS_REQUIRED = (days) => (days * 9 * 60 + 1) * 60 * 1000;
-const TARGET_URL = '#/me/attendance/logs'
+const HALF_DAY_PENALTY_MINUTES = 11 * 60 + 30;
+const TARGET_URL = '#/me/attendance/logs';
+
+function isLateLogin({ firstLogOfTheDay }) {
+  const loginHours = new Date(firstLogOfTheDay).getHours();
+  const loginMinutes = new Date(firstLogOfTheDay).getMinutes();
+  const totalLoginMinutes = loginHours * 60 + loginMinutes;
+  return (totalLoginMinutes > HALF_DAY_PENALTY_MINUTES)
+}
 
 async function getWeeklyData({ authToken }) {
   try {
@@ -72,7 +80,7 @@ async function getWeeklyData({ authToken }) {
         attendanceDate,
         firstLogOfTheDay,
         lastLogOfTheDay,
-        effectiveHoursInHHMM,
+        leaveDayStatuses = [],
       } = log;
       const day = new Date(attendanceDate).getDay();
       if (day === 0) {
@@ -81,6 +89,10 @@ async function getWeeklyData({ authToken }) {
       if (!firstLogOfTheDay || !lastLogOfTheDay) {
         totalLeaves += 1;
         continue;
+      }
+      if (leaveDayStatuses.includes(2) || leaveDayStatuses.includes(3) || isLateLogin({ firstLogOfTheDay })) {
+        totalLeaves += 0.5;
+        totalDays -= 0.5;
       }
       const startTime = new Date(firstLogOfTheDay).getTime();
       let lastTime = new Date(lastLogOfTheDay).getTime();
