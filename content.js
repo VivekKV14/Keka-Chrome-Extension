@@ -91,7 +91,8 @@ async function getWeeklyData({ authToken }) {
     let totalDays = 0;
     let totalLeaves = 0;
     const detailedData = {};
-    for (const log of logs) {
+    for (const ind in logs) {
+      const log = logs[ind];
       const {
         attendanceDate,
         firstLogOfTheDay,
@@ -102,7 +103,7 @@ async function getWeeklyData({ authToken }) {
       if (day === 0) {
         break;
       }
-      if (!firstLogOfTheDay || firstLogOfTheDay === lastLogOfTheDay) {
+      if (!firstLogOfTheDay || (ind && firstLogOfTheDay === lastLogOfTheDay)) {
         totalLeaves += 1;
         continue;
       }
