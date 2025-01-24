@@ -102,7 +102,7 @@ async function getWeeklyData({ authToken }) {
       if (day === 0) {
         break;
       }
-      if (!firstLogOfTheDay || !lastLogOfTheDay) {
+      if (!firstLogOfTheDay || firstLogOfTheDay === lastLogOfTheDay) {
         totalLeaves += 1;
         continue;
       }
