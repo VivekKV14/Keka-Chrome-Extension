@@ -33,12 +33,28 @@ function getHoursAndMinutesFromMilliseconds({ milliseconds = 0 }) {
   return { hours, minutes, formattedString };
 }
 
-const getDisplayMessage = ({ hours, minutes, isSurplus, hoursRemaining, minutesRemaining, totalLeaves }) => {
+function getFormattedTime({ dateObj }) {
+  let suffix = 'AM';
+  let hours = dateObj.getHours();
+  let mins = `${dateObj.getMinutes()}`;
+  if (hours >= 12) {
+    suffix = 'PM';
+    hours = hours % 12 || 12;
+  }
+  if (mins.length === 1) {
+    mins = `0${mins}`;
+  }
+  return `${hours}:${mins} ${suffix}`;
+}
+
+const getDisplayMessage = ({ hours, minutes, isSurplus, hoursRemaining, minutesRemaining, totalLeaves, milliseconds }) => {
+  const logoutTime = new Date(new Date().getTime() + milliseconds);
+  const formattedLogoutTime = getFormattedTime({ dateObj: logoutTime });
   return `You've served a total of ${hours}h ${minutes}m with ${
-    isSurplus ? `${hoursRemaining}h ${minutesRemaining}m extra served` : `${hoursRemaining}h ${minutesRemaining}m remaining`
-  }, and ${
-    totalLeaves > 0 ? `${totalLeaves} leave${totalLeaves > 1 ? 's' : ''} or clock-in issue${totalLeaves > 1 ? 's' : ''}` : 'no leaves or clock-in issues'
-  }-keep it up!`;
+    isSurplus ? `${hoursRemaining}h ${minutesRemaining}m extra served` : `${hoursRemaining}h ${minutesRemaining}m remaining (please leave at ${formattedLogoutTime})`
+  }. ${
+    totalLeaves > 0 ? `${totalLeaves} leave${totalLeaves > 1 ? 's' : ''} or clock-in issue${totalLeaves > 1 ? 's' : ''}` : 'No leaves or clock-in issues - keep it up!'
+  }`;
 };
 
 const TOTAL_MILLISECONDS_REQUIRED = (days) => (days * 9 * 60 + 1) * 60 * 1000;
@@ -110,13 +126,14 @@ async function getWeeklyData({ authToken }) {
     }
     const totalMillisRequired = TOTAL_MILLISECONDS_REQUIRED(totalDays);
     const isSurplus = totalMillisRequired < totalMillis;
+    const milliseconds = Math.abs(totalMillisRequired - totalMillis);
     const { hours, minutes } = getHoursAndMinutesFromMilliseconds({ milliseconds: totalMillis });
-    const { hours: hoursRemaining, minutes: minutesRemaining } = getHoursAndMinutesFromMilliseconds({ milliseconds: Math.abs(totalMillisRequired - totalMillis) });
+    const { hours: hoursRemaining, minutes: minutesRemaining } = getHoursAndMinutesFromMilliseconds({ milliseconds });
     console.log('Total', `${hours}h ${minutes}m`);
     console.log(`${isSurplus ? 'Extra Time' : 'Time Remaining'}`, `${hoursRemaining}h ${minutesRemaining}m`);
     console.log('Total Leaves Or Missing Clock In', totalLeaves);
     console.log('detailedData', detailedData);
-    const message = getDisplayMessage({ hours, minutes, isSurplus, hoursRemaining, minutesRemaining, totalLeaves });
+    const message = getDisplayMessage({ hours, minutes, isSurplus, hoursRemaining, minutesRemaining, totalLeaves, milliseconds });
     console.log(message);
     return message;
   } catch (error) {
@@ -165,6 +182,7 @@ function addDivToPage() {
   div.style.bottom = '10px';
   div.style.right = '10px';
   div.style.padding = '10px';
+  div.style.color = 'black';
   div.style.backgroundColor = 'lightblue';
   div.innerHTML = currentData;
   document.body.appendChild(div);
